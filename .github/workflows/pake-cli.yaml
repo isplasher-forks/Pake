@@ -62,6 +62,15 @@ on:
         description: "Package formats (comma-separated: deb,appimage,rpm,zst)"
         required: false
         default: "deb"
+      
+      base_conf_file:
+        description: "Base Tauri config file (JSON)"
+        required: false
+        default: "./src-tauri/tauri.conf.json"
+      extra_conf:
+        description: "Extra Tauri config (JSON object)"
+        required: false
+        default: "{}"
 
 jobs:
   build:
@@ -83,6 +92,27 @@ jobs:
         uses: ./.github/actions/setup-env
         with:
           mode: build
+
+      - name: Prepare conf files
+        run: |
+          BASE_CONF=$(<"${{ inputs.base_conf_file }}")
+          CONF="${{ inputs.extra_conf }}"
+          jq -n \
+            --argjson base "$BASE_CONF" \
+            --argjson conf "$CONF" '
+          def deepmerge(a;b):
+            reduce (a + b | to_entries[]) as $i
+              ({}; 
+                .[$i.key] =
+                  if (.[$i.key] | type) == "object"
+                    and ($i.value | type) == "object"
+                  then deepmerge(.[$i.key]; $i.value)
+                  else $i.value
+                  end
+              );
+
+          deepmerge($base; $conf)
+          ' > "${{ inputs.base_conf_file }}"
 
       - name: Build CLI
         run: pnpm run cli:build
