@@ -120,18 +120,21 @@ jobs:
   build:
     name: ${{ inputs.platform }}
     runs-on: ${{ inputs.platform }}
+    defaults:
+      run:
+        shell: bash
 
     steps:
       - name: Checkout repository
         uses: actions/checkout@v6
 
-      - if:  ${{ contains(inputs.platform, 'windows') }}
+      - if: runner.os == 'Windows'
         name: Windows base config file
         run: echo "platform_base_conf_file=src-tauri/tauri.windows.conf.json" >> "$GITHUB_ENV"
-      - if:  ${{ contains(inputs.platform, 'macos') }}
+      - if: runner.os == 'macOS'
         name: macOS base config file
         run: echo "platform_base_conf_file=src-tauri/tauri.macos.conf.json" >> "$GITHUB_ENV"
-      - if:  ${{ contains(inputs.platform, 'ubuntu') }}
+      - if: runner.os == 'Linux'
         name: Linux base config file
         run: echo "platform_base_conf_file=src-tauri/tauri.linux.conf.json" >> "$GITHUB_ENV"
 
