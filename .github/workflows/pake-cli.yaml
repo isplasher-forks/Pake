@@ -158,15 +158,16 @@ jobs:
           def deep_merge(base, extra):
               if isinstance(base, list) and isinstance(extra, list):
                   for idx, value in enumerate(extra):
-                      if idx < len(base) and isinstance(base[idx], dict) and isinstance(value, dict):
+                      if idx < len(base) and isinstance(base[idx], (dict,list)) and isinstance(value, (dict,list)):
                           base[idx] = deep_merge(base[idx], value)
                       else:
                           base.append(value)
                   return base
               elif isinstance(base, dict) and isinstance(extra, dict):
                   for key, value in extra.items():
-                      if key in base and isinstance(base[key], dict) and isinstance(value, dict):
+                      if key in base and isinstance(base[key], (dict,list)) and isinstance(value, (dict,list)):
                           base[key] = deep_merge(base[key], value)
+                      e
                       else:
                           base[key] = value
               return base
@@ -182,16 +183,16 @@ jobs:
       - name: Prepare base configuration
         run: |
           base_cfg="{}"
-          base_cfg=$(python3 _deepmerge.py "$base_cfg" '{"pake": {"windows": [{"browserExtensionsEnabled": ${{ inputs.browser_extensions_enabled }}}]}}')
-          base_cfg=$(python3 _deepmerge.py "$base_cfg" '{"pake": {"windows": [{"additionalBrowserArgs": "${{ inputs.additional_browser_args }}"}]}}')
-          base_cfg=$(python3 _deepmerge.py "$base_cfg" '{"pake": {"windows": [{"dataDirectory": "${{ inputs.data_directory }}"}]}}')
-          base_cfg=$(python3 _deepmerge.py "$base_cfg" '{"pake": {"windows": [{"devtools": ${{ inputs.devtools }}}]}}')
-          base_cfg=$(python3 _deepmerge.py "$base_cfg" '{"pake": {"windows": [{"incognito": ${{ inputs.incognito }}}]}}')
-          base_cfg=$(python3 _deepmerge.py "$base_cfg" '{"pake": {"windows": [{"proxyUrl": "${{ inputs.proxy_url }}"}]}}')
-          base_cfg=$(python3 _deepmerge.py "$base_cfg" '{"pake": {"windows": [{"userAgent": "${{ inputs.user_agent }}"}]}}')
-          base_cfg=$(python3 _deepmerge.py "$base_cfg" '{"pake": {"windows": [{"windowClassname": "${{ inputs.window_classname }}"}]}}')
-          base_cfg=$(python3 _deepmerge.py "$base_cfg" '{"pake": {"windows": [{"windowEffectsConfig": ${{ inputs.window_effects_config }}}]}}')
-          base_cfg=$(python3 _deepmerge.py "$base_cfg" '{"pake": {"windows": [{"zoomHotkeysEnabled": ${{ inputs.zoom_hotkeys_enabled }}}]}}')
+          base_cfg=$(python3 _deepmerge.py "$base_cfg" '{"app": {"windows": [{"browserExtensionsEnabled": ${{ inputs.browser_extensions_enabled }}}]}}')
+          base_cfg=$(python3 _deepmerge.py "$base_cfg" '{"app": {"windows": [{"additionalBrowserArgs": "${{ inputs.additional_browser_args }}"}]}}')
+          base_cfg=$(python3 _deepmerge.py "$base_cfg" '{"app": {"windows": [{"dataDirectory": "${{ inputs.data_directory }}"}]}}')
+          base_cfg=$(python3 _deepmerge.py "$base_cfg" '{"app": {"windows": [{"devtools": ${{ inputs.devtools }}}]}}')
+          base_cfg=$(python3 _deepmerge.py "$base_cfg" '{"app": {"windows": [{"incognito": ${{ inputs.incognito }}}]}}')
+          base_cfg=$(python3 _deepmerge.py "$base_cfg" '{"app": {"windows": [{"proxyUrl": "${{ inputs.proxy_url }}"}]}}')
+          base_cfg=$(python3 _deepmerge.py "$base_cfg" '{"app": {"windows": [{"userAgent": "${{ inputs.user_agent }}"}]}}')
+          base_cfg=$(python3 _deepmerge.py "$base_cfg" '{"app": {"windows": [{"windowClassname": "${{ inputs.window_classname }}"}]}}')
+          base_cfg=$(python3 _deepmerge.py "$base_cfg" '{"app": {"windows": [{"windowEffectsConfig": ${{ inputs.window_effects_config }}}]}}')
+          base_cfg=$(python3 _deepmerge.py "$base_cfg" '{"app": {"windows": [{"zoomHotkeysEnabled": ${{ inputs.zoom_hotkeys_enabled }}}]}}')
           echo "base_cfg=$base_cfg" >> "$GITHUB_ENV"
 
 
