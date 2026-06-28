@@ -190,15 +190,15 @@ jobs:
         run: |
           base_cfg="{}"
           base_cfg=$(python3 _deepmerge.py "$base_cfg" '{"pake": {"windows": [{"browserExtensionsEnabled": ${{ inputs.browser_extensions_enabled }}}]}}')
-          base_cfg=$(python3 _deepmerge.py "$base_cfg" '{"pake": {"additionalBrowserArgs": "${{ inputs.additional_browser_args }}"}}')
-          base_cfg=$(python3 _deepmerge.py "$base_cfg" '{"pake": {"dataDirectory": "${{ inputs.data_directory }}"}}')
-          base_cfg=$(python3 _deepmerge.py "$base_cfg" '{"pake": {"devtools": ${{ inputs.devtools }}}}')
-          base_cfg=$(python3 _deepmerge.py "$base_cfg" '{"pake": {"incognito": ${{ inputs.incognito }}}}')
-          base_cfg=$(python3 _deepmerge.py "$base_cfg" '{"pake": {"proxyUrl": "${{ inputs.proxy_url }}"}}')
-          base_cfg=$(python3 _deepmerge.py "$base_cfg" '{"pake": {"userAgent": "${{ inputs.user_agent }}"}}')
-          base_cfg=$(python3 _deepmerge.py "$base_cfg" '{"pake": {"windowClassname": "${{ inputs.window_classname }}"}}')
-          base_cfg=$(python3 _deepmerge.py "$base_cfg" '{"pake": {"windowEffectsConfig": ${{ inputs.window_effects_config }}}}')
-          base_cfg=$(python3 _deepmerge.py "$base_cfg" '{"pake": {"zoomHotkeysEnabled": ${{ inputs.zoom_hotkeys_enabled }}}}')
+          base_cfg=$(python3 _deepmerge.py "$base_cfg" '{"pake": {"windows": [{"additionalBrowserArgs": "${{ inputs.additional_browser_args }}"}]}}')
+          base_cfg=$(python3 _deepmerge.py "$base_cfg" '{"pake": {"windows": [{"dataDirectory": "${{ inputs.data_directory }}"}]}}')
+          base_cfg=$(python3 _deepmerge.py "$base_cfg" '{"pake": {"windows": [{"devtools": ${{ inputs.devtools }}}]}}')
+          base_cfg=$(python3 _deepmerge.py "$base_cfg" '{"pake": {"windows": [{"incognito": ${{ inputs.incognito }}}]}}')
+          base_cfg=$(python3 _deepmerge.py "$base_cfg" '{"pake": {"windows": [{"proxyUrl": "${{ inputs.proxy_url }}"}]}}')
+          base_cfg=$(python3 _deepmerge.py "$base_cfg" '{"pake": {"windows": [{"userAgent": "${{ inputs.user_agent }}"}]}}')
+          base_cfg=$(python3 _deepmerge.py "$base_cfg" '{"pake": {"windows": [{"windowClassname": "${{ inputs.window_classname }}"}]}}')
+          base_cfg=$(python3 _deepmerge.py "$base_cfg" '{"pake": {"windows": [{"windowEffectsConfig": ${{ inputs.window_effects_config }}}]}}')
+          base_cfg=$(python3 _deepmerge.py "$base_cfg" '{"pake": {"windows": [{"zoomHotkeysEnabled": ${{ inputs.zoom_hotkeys_enabled }}}]}}')
           echo "base_cfg=$base_cfg" >> "$GITHUB_ENV"
 
 
