@@ -167,7 +167,6 @@ jobs:
                   for key, value in extra.items():
                       if key in base and isinstance(base[key], (dict,list)) and isinstance(value, (dict,list)):
                           base[key] = deep_merge(base[key], value)
-                      e
                       else:
                           base[key] = value
               return base
