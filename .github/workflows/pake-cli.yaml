@@ -163,11 +163,19 @@ jobs:
           import sys
 
           def deep_merge(base, extra):
-              for key, value in extra.items():
-                  if key in base and isinstance(base[key], dict) and isinstance(value, dict):
-                      base[key] = deep_merge(base[key], value)
-                  else:
-                      base[key] = value
+              if isinstance(base, list) and isinstance(extra, list):
+                  for idx, value in enumerate(extra):
+                      if idx < len(base) and isinstance(base[idx], dict) and isinstance(value, dict):
+                          base[idx] = deep_merge(base[idx], value)
+                      else:
+                          base.append(value)
+                  return base
+              elif isinstance(base, dict) and isinstance(extra, dict):
+                  for key, value in extra.items():
+                      if key in base and isinstance(base[key], dict) and isinstance(value, dict):
+                          base[key] = deep_merge(base[key], value)
+                      else:
+                          base[key] = value
               return base
 
           if __name__ == "__main__":
