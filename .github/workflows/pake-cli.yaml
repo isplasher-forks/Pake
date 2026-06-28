@@ -111,7 +111,7 @@ on:
         required: false
         default: "{}"
       base_conf_file:
-        description: "Base Tauri config file (JSON)"
+        description: "Base Tauri config file (if empty, auto-detect based on platform)"
         required: false
         default: ""
 
@@ -124,16 +124,6 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v6
-
-      - name: Install Rust
-        uses: dtolnay/rust-toolchain@stable
-        with:
-          toolchain: stable
-
-      - name: Setup Node.js Environment
-        uses: ./.github/actions/setup-env
-        with:
-          mode: build
 
       - if:  ${{ contains(inputs.platform, 'windows') }}
         name: Windows base config file
@@ -211,6 +201,16 @@ jobs:
           MERGED_CONF=$(python3 _deepmerge.py "$BASE_CONF" "$EXTRA_CONF")
           echo "::notice title=Merged-configuration::Merged configuration after merging extra settings:\n${MERGED_CONF}"
           echo "$MERGED_CONF" > "$base_conf_file"
+
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          toolchain: stable
+
+      - name: Setup Node.js Environment
+        uses: ./.github/actions/setup-env
+        with:
+          mode: build
 
       - name: Build CLI
         run: pnpm run cli:build
