@@ -62,22 +62,64 @@ on:
         description: "Package formats (comma-separated: deb,appimage,rpm,zst)"
         required: false
         default: "deb"
-      
-      base_conf_file:
-        description: "Base Tauri config file (JSON)"
+      browser_extensions_enabled:
+        description: "Enable browser extensions"
         required: false
-        default: "./src-tauri/tauri.conf.json"
+        type: boolean
+        default: false
+      additional_browser_args:
+        description: "Additional browser arguments"
+        required: false
+        default: ""
+      data_directory:
+        description: "Data directory"
+        required: false
+        default: ""
+      devtools:
+        description: "Enable devtools"
+        required: false
+        type: boolean
+        default: false
+      incognito:
+        description: "Enable incognito mode"
+        required: false
+        type: boolean
+        default: false
+      proxy_url:
+        description: "Proxy URL"
+        required: false
+        default: ""
+      user_agent:
+        description: "Custom user agent"
+        required: false
+        default: ""
+      window_classname:
+        description: "Window class name (Windows only)"
+        required: false
+        default: ""
+      window_effects_config:
+        description: "Window effects config (JSON object)"
+        required: false
+        default: "{}"
+      zoom_hotkeys_enabled:
+        description: "Enable zoom hotkeys"
+        required: false
+        type: boolean
+        default: false
       extra_conf:
         description: "Extra Tauri config (JSON object)"
         required: false
         default: "{}"
+      base_conf_file:
+        description: "Base Tauri config file (JSON)"
+        required: false
+        default: ""
+
 
 jobs:
   build:
     name: ${{ inputs.platform }}
     runs-on: ${{ inputs.platform }}
-    strategy:
-      fail-fast: false
 
     steps:
       - name: Checkout repository
@@ -93,26 +135,74 @@ jobs:
         with:
           mode: build
 
+      - if:  ${{ contains(inputs.platform, 'windows') }}
+        name: Windows base config file
+        run: echo "platform_base_conf_file=src-tauri/tauri.windows.conf.json" >> "$GITHUB_ENV"
+      - if:  ${{ contains(inputs.platform, 'macos') }}
+        name: macOS base config file
+        run: echo "platform_base_conf_file=src-tauri/tauri.macos.conf.json" >> "$GITHUB_ENV"
+      - if:  ${{ contains(inputs.platform, 'ubuntu') }}
+        name: Linux base config file
+        run: echo "platform_base_conf_file=src-tauri/tauri.linux.conf.json" >> "$GITHUB_ENV"
+
+      - name: Determine base config file
+        id: determine_base_conf
+        run: |
+          if [ -z "${{ inputs.base_conf_file }}" ]; then
+            echo "No base config file provided, using default based on platform: $platform_base_conf_file"
+            echo "base_conf_file=$platform_base_conf_file" >> "$GITHUB_ENV"
+          else
+            echo "Using provided base config file: ${{ inputs.base_conf_file }}"
+            echo "base_conf_file=${{ inputs.base_conf_file }}" >> "$GITHUB_ENV"
+          fi
+
+      - name: Write deepmerge python script
+        run: |
+          cat << 'EOF' > _deepmerge.py
+          import json
+          import sys
+
+          def deep_merge(base, extra):
+              for key, value in extra.items():
+                  if key in base and isinstance(base[key], dict) and isinstance(value, dict):
+                      base[key] = deep_merge(base[key], value)
+                  else:
+                      base[key] = value
+              return base
+
+          if __name__ == "__main__":
+              base_conf = json.loads(sys.argv[1])
+              extra_conf = json.loads(sys.argv[2])
+              indent = int(sys.argv[3]) if len(sys.argv) > 3 else None
+              merged_conf = deep_merge(base_conf, extra_conf)
+              print(json.dumps(merged_conf, separators=(",", ":") if indent is None else None, indent=indent))
+          EOF
+
+      - name: Prepare base configuration
+        run: |
+          base_cfg="{}"
+          base_cfg=$(python3 _deepmerge.py "$base_cfg" '{"pake": {"windows": [{"browserExtensionsEnabled": ${{ inputs.browser_extensions_enabled }}}]}}')
+          base_cfg=$(python3 _deepmerge.py "$base_cfg" '{"pake": {"additionalBrowserArgs": "${{ inputs.additional_browser_args }}"}}')
+          base_cfg=$(python3 _deepmerge.py "$base_cfg" '{"pake": {"dataDirectory": "${{ inputs.data_directory }}"}}')
+          base_cfg=$(python3 _deepmerge.py "$base_cfg" '{"pake": {"devtools": ${{ inputs.devtools }}}}')
+          base_cfg=$(python3 _deepmerge.py "$base_cfg" '{"pake": {"incognito": ${{ inputs.incognito }}}}')
+          base_cfg=$(python3 _deepmerge.py "$base_cfg" '{"pake": {"proxyUrl": "${{ inputs.proxy_url }}"}}')
+          base_cfg=$(python3 _deepmerge.py "$base_cfg" '{"pake": {"userAgent": "${{ inputs.user_agent }}"}}')
+          base_cfg=$(python3 _deepmerge.py "$base_cfg" '{"pake": {"windowClassname": "${{ inputs.window_classname }}"}}')
+          base_cfg=$(python3 _deepmerge.py "$base_cfg" '{"pake": {"windowEffectsConfig": ${{ inputs.window_effects_config }}}}')
+          base_cfg=$(python3 _deepmerge.py "$base_cfg" '{"pake": {"zoomHotkeysEnabled": ${{ inputs.zoom_hotkeys_enabled }}}}')
+          echo "base_cfg=$base_cfg" >> "$GITHUB_ENV"
+
+
       - name: Prepare conf files
         run: |
-          BASE_CONF=$(<"${{ inputs.base_conf_file }}")
-          CONF="${{ inputs.extra_conf }}"
-          jq -n \
-            --argjson base "$BASE_CONF" \
-            --argjson conf "$CONF" '
-          def deepmerge(a;b):
-            reduce (a + b | to_entries[]) as $i
-              ({}; 
-                .[$i.key] =
-                  if (.[$i.key] | type) == "object"
-                    and ($i.value | type) == "object"
-                  then deepmerge(.[$i.key]; $i.value)
-                  else $i.value
-                  end
-              );
-
-          deepmerge($base; $conf)
-          ' > "${{ inputs.base_conf_file }}"
+          BASE_CONF=$(<"$base_conf_file")
+          BASE_CONF=$(python3 _deepmerge.py "$BASE_CONF" "$base_cfg")
+          echo "::notice title=Base-configuration::Base configuration after merging pake settings:\n${BASE_CONF}"
+          EXTRA_CONF='${{ inputs.extra_conf }}'
+          MERGED_CONF=$(python3 _deepmerge.py "$BASE_CONF" "$EXTRA_CONF")
+          echo "::notice title=Merged-configuration::Merged configuration after merging extra settings:\n${MERGED_CONF}"
+          echo "$MERGED_CONF" > "$base_conf_file"
 
       - name: Build CLI
         run: pnpm run cli:build
